@@ -1,0 +1,94 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+  (Fill in comments below)
+*******************************************************************************************/
+/*
+Dealer Name:
+System Name:
+System Number:
+Programmer:
+Comments:
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+  (Uncomment and declare compiler directives as needed)
+*******************************************************************************************/
+// #ENABLE_DYNAMIC
+#SYMBOL_NAME "BA-Reboot Memorizer v1.0"
+// #HINT ""
+// #DEFINE_CONSTANT
+// #CATEGORY "" 
+// #PRINT_TO_TRACE
+// #DIGITAL_EXPAND 
+// #ANALOG_SERIAL_EXPAND 
+// #OUTPUT_SHIFT 
+// #HELP_PDF_FILE ""
+#DEFAULT_NONVOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+// #ENCODING_ASCII
+// #ENCODING_UTF16
+// #ENCODING_INHERIT_FROM_PARENT
+// #ENCODING_INHERIT_FROM_PROGRAM
+/*
+#HELP_BEGIN
+   (add additional lines of help lines)
+#HELP_END
+*/
+               
+////////////////////////////
+
+Digital_Input _SKIP_,Dram_in[128];
+Analog_Input Aram_in[128];
+
+////////////////////////////
+
+Digital_Output _SKIP_,Dram_out[128];
+Analog_Output Aram_out[128];
+
+////////////////////////////
+
+String_Parameter Restore_Delay$[255];
+
+////////////////////////////
+
+Integer store, store_en, recall;
+Integer Dram[128],Aram[128];
+                     
+Function StoreLight(){
+	Integer i;
+	if (store_en){
+		For (i = 1 to 128){
+	    	Dram[i] = Dram_in[i];
+			Aram[i] = Aram_in[i];
+		}
+	}
+}
+
+Function RecallLight(){
+	Integer i;
+	For (i = 1 to 128){
+    	Dram_out[i] = Dram[i];
+		Aram_out[i] = Aram[i];
+	}
+}
+                  
+Change Dram_in{
+    StoreLight();
+}
+
+Change Aram_in{
+    StoreLight();
+}
+
+Function Main()
+{
+	Waitforinitializationcomplete();	
+	store_en = 0;	
+	Delay(ATOI(Restore_Delay$));
+	RecallLight();
+	Delay(5);	
+	store_en = 1;
+}
+

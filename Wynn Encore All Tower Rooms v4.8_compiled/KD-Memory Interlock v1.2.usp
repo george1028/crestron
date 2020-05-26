@@ -1,0 +1,143 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+*******************************************************************************************/
+
+/*
+Dealer Name: Crestron Las Vegas
+System Name: KD-Memory Interlock
+System Number: 5154
+Programmer: Kevin Dry
+Comments: F.I.A.H
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+*******************************************************************************************/ 
+
+#SYMBOL_NAME "KD-Memory Interlock v1.2"
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+//#ENABLE_TRACE 
+#Digital_expand InputsWithOutputs     															//Expands input with output
+
+#HELP_BEGIN
+KD-Memory Interlock v1.2 By Kevin Dry
+
+This expandable module is a non volitale interlock.  It is Break before make and
+therefore should operate similar to an interlock.  However, it will remember the last
+"locked" position upon reboot
+
+-v1.1 Added a first time startup default.
+-v1.2 Saves info to a file
+
+#HELP_END
+
+/*******************************************************************************************
+  parameters
+*******************************************************************************************/
+
+INTEGER_PARAMETER First_Time_Default;
+
+/*******************************************************************************************
+  DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+*******************************************************************************************/
+
+DIGITAL_INPUT _SKIP_,Input[50];
+ 
+DIGITAL_OUTPUT _SKIP_,Output[50];
+
+/*******************************************************************************************
+  Global Variables
+*******************************************************************************************/ 
+
+INTEGER  i,Existing,NumInputs;  
+
+String Room_Type$[5];						
+														//Used to convert from integer to ASCII and back
+/*******************************************************************************************
+ Function
+*******************************************************************************************/ 
+
+Function Check_Output()                             												//Set proper output high and all others low
+{ 
+Integer X;
+
+For (x = 1 to NumInputs)																			//Cycle through all outputs
+    {
+	output[X] = 0 ;																					//Zero all outputs
+    }     
+  Output[i] = 1 ;                                 													//Make active output high
+}
+				////////////////////////////////
+Function Save_Info()                      			 												//Saves to flash
+	{
+Integer iFileHandel,iErrorCode;
+
+	StartFileOperations();  																		//Start file operations
+	
+	iFileHandel = FileOpen("\\NVRAM\\Current_Room.txt",_O_WRonly |_O_Binary |_O_CREAT);	            //Write to file 
+                                           
+    	If(iFileHandel >= 0)
+		{ 
+    	iErrorCode = Writestring ( iFileHandel,Room_Type$); 										//Writes the array to the file
+    	FileClose( iFileHandel );                                   								//Stops write process
+    	}
+	EndFileOperations();																			//End file operations
+	}																								//End function
+				////////////////////////////////		                                                       		
+Function Retreve_Info()
+	{
+Integer iFileHandel,iErrorCode;
+
+	StartFileOperations();  																		//Start file operations
+	
+	iFileHandel = FileOpen("\\NVRAM\\Current_Room.txt", _O_RDonly|_O_Binary ); 						//Read file "Password" 
+	
+		If(iFileHandel >= 0)                                             
+        {
+		Readstring( iFileHandel,Room_Type$); 														//Reads the string from the file    
+        i = ATOI(Room_Type$);
+        FileClose( iFileHandel );                                   								//Stops write process
+    	}
+
+   	EndFileOperations();																			//End file operations
+
+	IF (i > 0)																						//If a value is currently active
+		{ 
+		Call Check_output();  																		//Refresh interlock after startup
+		}
+
+		Else 
+		{
+		Output[First_Time_Default] = 1;																//Sets a default @ Startup	from parmameter						
+		}
+	}									
+
+/*******************************************************************************************
+  The Tihs!
+*******************************************************************************************/
+
+PUSH Input
+{ 
+	i = Getlastmodifiedarrayindex();    															//Get last input selected
+    Room_Type$ = ITOA(i);
+    Call Save_Info();
+	Call Check_output() ;																			//Set proper output high and all others low
+}
+
+/*******************************************************************************************
+  Main()
+*******************************************************************************************/ 
+
+Function Main()
+{
+ 	WaitForInitializationComplete();																//Wait for processor to boot up
+    
+    FOR(NumInputs = 50 to 1 Step -1)                												//Get the number of inputs defined
+       {
+       IF(IsSignalDefined(Input[NumInputs]))														//Find defined signals
+
+          Break; 							
+        }
+        Call Retreve_Info();
+}

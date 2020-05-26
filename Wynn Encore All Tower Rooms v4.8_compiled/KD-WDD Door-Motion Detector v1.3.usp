@@ -1,0 +1,127 @@
+/***********************************************************************************************
+  SIMPL+ Module Information
+************************************************************************************************/
+/*
+Dealer Name:Crestron     
+System Name:KD-WDD Door/Motion Detector v1.3
+System Number:5154    
+Programmer:Kevin Dry    
+Comments:F.I.A.H.
+*/
+
+/************************************************************************************************
+  Compiler Directives
+*************************************************************************************************/
+
+#SYMBOL_NAME "KD-WDD Door/Motion Detector v1.3"
+#DEFAULT_NONVOLATILE
+#ENABLE_STACK_CHECKING
+//#ENABLE_Trace
+#HELP_BEGIN
+
+KD-WDD Door/Motion Detector v1.3 By Kevin Dry
+
+Here is the concept:
+1) Open door/No motion detected/Exit mode active/Room unoccupied  THis is the event eventualy triggers a welcome scene. 
+2) Detect motion at any time weather or not the door is open= Room occupied
+3) Door closes, no motion, starts a variable timer to show room unoccupied. (Variable set in 100's of a second.  Se notes below!
+4) Door closes + motion = Occupied
+5) Door open, No occupancy, then  motion, room ocupied, welcome scene triggered
+
+All inputs are tied to the approprate sensors.  All outputs trigger events
+
+TIMEOUT is a long_integer, expressed in hundredths of a second. For example, 525 specifies a wait time of 5.25 seconds
+  
+
+v1.3- No change from 1.2.  Had issues with this verion showing up in SIMPL
+
+#HELP_END
+
+//#DEFINE_CONSTANT 
+
+/*************************************************************************************************
+ IO'zzzz 
+**************************************************************************************************/
+ 
+Digital_Input _SKIP_,Motion,Door;
+
+Digital_Output _SKIP_,Room_Occupied,Entry,Exit;
+
+/*************************************************************************************************
+ Variables
+**************************************************************************************************/
+
+Integer Entry_Ready;												//This allows the trigger for entry mode
+
+/*************************************************************************************************
+ parameters
+**************************************************************************************************/
+
+//INTEGER_PARAMETER Timeout;										//Fill in from the outside  Used for testing
+           
+/*************************************************************************************************
+ Function
+**************************************************************************************************/
+
+/*************************************************************************************************
+ The Shit
+**************************************************************************************************/
+
+Push Motion															//If motion is triggered.					
+	{	
+	Entry = 0;														//ENtry mode complete
+	Entry_Ready = 0;												//Entry ready set to no
+	Room_Occupied = 1;												//Room is considered ocupied
+	Exit = 0;
+	CANCELALLWAIT();												//Room cannot be unocupied untill the next motion event
+	}
+
+Release Door														//When door opens.  (Contact is opened)											
+{
+	If ((Entry_Ready = 1)  && (Room_Occupied = 0))					//If entry mode is engaged Set entry ready to true
+	{
+	Entry = 1;														//Entry is true
+	Entry_Ready = 0;												//Entry is no longer ready
+	Room_Occupied = 1;	
+	Exit = 0;														//COnsider room ocupied
+   	}																
+}
+
+Push Door															//When door is shut.... (Contact is closed)
+{
+	Delay (1000);													//Wait 15 seconds....
+		If (Motion = 0)												//If no motion is detected when the door closes
+  		{
+		Wait(180000)												//Wait!  (Wait time is approx 30 MIN -or- 180000 1/100s  of a second..Don't belelieve me?  http://www.kylesconverter.com/time/centiseconds-to-minutes)
+			{
+			PROCESSLOGIC();											//Wait time could be excessive.  Force task switch
+			Room_Occupied = 0;										//Set ocupied to zero
+			Entry_ready = 1;										//Entry ready = 1
+			Entry = 0;												//Set entry trigger low
+			Exit = 1;												//Exit = True        
+			}
+		}
+
+		Else If (Motion= 1)
+		{															
+		Room_Occupied = 1;											//Set ocupied to zero
+		Entry_ready = 0;											//Entry ready = 0
+		Entry = 0;
+		Exit = 0;	
+		}	
+}
+
+/*****************************************************************************************************
+ Main
+//****************************************************************************************************/
+
+Function Main()
+	{
+   	Waitforinitializationcomplete();
+	
+	Entry        = 0;												//Set all triggers to false
+	Entry_Ready  = 0;
+	Exit         = 0;
+	Room_Occupied= 0;
+	}    
+//****************************************************************************************************

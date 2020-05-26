@@ -1,0 +1,72 @@
+
+#Category "16" // Time/Date
+#Symbol_Name "Fusion Time Sync v1.10"
+#Default_Volatile
+#Enable_Stack_Checking
+#HELP_PDF_FILE "Fusion Time Sync v1.10 Module Help File.pdf"
+
+#Define_Constant	ciLocal_Time_Size		200	
+
+/*** I/O ***/
+
+Digital_Input 	_skip_, Sync_Time_b;
+String_Input 	_skip_, Local_Date_Time_Query_rx$[ciLocal_Time_Size];
+String_output 	_skip_, _skip_, _skip_, Local_Date_Time_Query_tx$;
+
+/*** Parameters ***/
+
+Integer_Parameter InstanceID;
+
+#Begin_Parameter_Properties InstanceID
+	propValidUnits = unitDecimal;
+	propDefaultValue = 1d;
+#End_Parameter_Properties
+
+/*** Variables ***/
+
+Integer 		g_nSemaphore;
+
+/*** Functions ***/
+
+
+/*** I/O ***/
+
+Push Sync_Time_b
+{
+	seed(getticks());
+	delay(((random(0, 60) + InstanceID) MOD 60)*1000);
+	makestring (Local_Date_Time_Query_tx$, "<LocalTimeRequest><RequestID>%s</RequestID></LocalTimeRequest>", itoa(random(0, 255)));
+	makestring (Local_Date_Time_Query_tx$, "");
+}
+
+Change Local_Date_Time_Query_rx$
+{
+	string sTemp_String[ciLocal_Time_Size];
+	string sTemp_String2[ciLocal_Time_Size];
+
+	integer nSync_Year, nSync_Month, nSync_Date, nSync_Hour, nSync_Minute, nSync_Second;
+	integer nPos1, nPos2;
+	
+	if(g_nSemaphore = 0)
+	{
+		g_nSemaphore = 1;
+		
+		sTemp_String = gather("</LocalTimeResponse>", Local_Date_Time_Query_rx$);
+		nPos1 = find("<LocalDateTime>", sTemp_String, 1) + len("<LocalDateTime>");
+		nPos2 = find("</LocalDateTime>", sTemp_String, nPos1);
+		
+		sTemp_String2 = mid(sTemp_String, nPos1, nPos2-nPos1);
+		nSync_Year = atoi(mid(sTemp_String2, 1, 4));
+		nSync_Month = atoi(mid(sTemp_String2, 6, 2));
+		nSync_Date = atoi(mid(sTemp_String2, 9, 2));
+		nSync_Hour = atoi(mid(sTemp_String2, 12, 2));
+		nSync_Minute = atoi(mid(sTemp_String2, 15, 2));
+		nSync_Second = atoi(mid(sTemp_String2, 18, 2));
+		
+		Setclock(nSync_Hour, nSync_Minute, nSync_Second);
+		SetDate(nSync_Month, nSync_Date, nSync_Year);
+		
+		g_nSemaphore = 0;
+		//print("\nThis is the year: %d\nThis is the month: %d\nThis is the Date: %d\nThis is the Hour: %d\nThis is the Minute: %d\n\n", nSync_Year, nSync_Month, nSync_Date, nSync_Hour, nSync_Minute);
+	}
+}

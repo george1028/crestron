@@ -1,0 +1,47 @@
+/*
+Dealer Name: Crestron Las Vegas
+Programmer: Kevin Dry
+Comments:F.I.A.H.
+*/
+
+
+#HELP_BEGIN
+Enseo Sleep Engine v2 by Kevin Dry
+
+This module is designed to parse out the remaining sleep time
+from an Enseo SP30RS controller card
+#HELP_END
+   
+
+#SYMBOL_NAME "Enseo Sleep Engine v3.1"
+#DEFAULT_NONVOLATILE
+#ENABLE_STACK_CHECKING
+#CATEGORY "1" 
+  
+//ins and outs 
+BUFFER_INPUT INPUT$[250];
+ANALOG_OUTPUT SLEEP;
+
+//temp stuff
+INTEGER START,LENGTH,END;
+STRING  DATA$[100];
+
+// stuff that makes it work starts here
+Threadsafe CHANGE INPUT$
+{  
+  IF(FIND("#SLEEP",INPUT$) && FIND("\n",INPUT$))
+
+            {
+            START=FIND("#SLEEP",INPUT$);
+            LENGTH=LEN("#SLEEP");
+            START=START+LENGTH;
+            END=FIND("\r",INPUT$);
+            DATA$=MID(INPUT$,START,(Start - End));
+			SLEEP = ATOI(DATA$);                      
+            }
+	CLEARBUFFER   (INPUT$);
+		
+     }
+           
+            
+                        

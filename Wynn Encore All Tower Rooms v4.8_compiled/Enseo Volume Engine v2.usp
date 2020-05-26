@@ -1,0 +1,48 @@
+/*
+Dealer Name: Crestron Las Vegas
+Programmer: Frank Moctezuma
+Comments:KIAH
+*/
+
+#SYMBOL_NAME "Enseo Volume Engine v2"
+#DEFAULT_NONVOLATILE
+#ENABLE_STACK_CHECKING
+#CATEGORY "1" 
+  
+//ins and outs 
+BUFFER_INPUT INPUT$[300];
+ANALOG_OUTPUT VOLUME;
+
+//temp stuff
+INTEGER START,LENGTH,END,VOL_TEMP,MULTI,DIV;
+STRING  DATA$[100];
+
+// stuff that makes it work starts here
+Threadsafe CHANGE INPUT$
+{  
+	//Input$ = Gather ("\x0D\x0A", Input);
+
+  IF(FIND("#VOLUME",INPUT$) && FIND("\n",INPUT$))
+
+            {
+            START=FIND("#VOLUME",INPUT$);
+            LENGTH=LEN("#VOLUME");
+            START=START+LENGTH;
+            END=FIND("\n",INPUT$);
+            DATA$=MID(INPUT$,START,(END-START));
+			VOL_TEMP= ATOI(DATA$);
+			MULTI= (65535/99);
+			DIV= (VOL_TEMP * MULTI);
+		IF (DIV>3500)
+			{
+             VOLUME=(DIV+96);
+        	CLEARBUFFER (INPUT$);
+			}
+			ELSE 
+			{
+             VOLUME=DIV;
+			CLEARBUFFER (INPUT$);
+			}
+		}
+	CLEARBUFFER (INPUT$);
+	}

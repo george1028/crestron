@@ -1,0 +1,180 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+*******************************************************************************************/
+/*
+Dealer Name:Crestron Electronics    
+System Name:5154    
+Programmer:Kevin Dry    
+Comments:F.I.A.H.
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+*******************************************************************************************/
+
+#SYMBOL_NAME "KD-Infinet EX parser v1.4"
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#enable_trace
+
+#HELP_BEGIN
+KD-Infinet EX parser v1.2
+#HELP_END
+
+/*************************************************************************************************
+ IO'zzzz 
+**************************************************************************************************/
+
+Buffer_Input RX$[500];
+
+String_Input ID[2],Serial_Number[25],New_Serial_Number[25];
+
+Digital_Input Set_ID,Clear,External,New;
+
+String_Output TX$,Error$;
+
+Digital_Output Acquire_Active,Error,ID_Set;
+
+/*************************************************************************************************
+ Variables
+**************************************************************************************************/
+Integer D;
+
+String Temp1$[500],SN$[25];
+					
+/*************************************************************************************************
+ Function
+**************************************************************************************************/
+ 
+
+/****************************************************************************************************
+ The Tihs
+*****************************************************************************************************/
+ 
+Threadsafe Change RX$
+{
+Integer end;
+
+Cancelallwait();
+
+Temp1$ = Gather("\x0D\x0A",RX$);															//Get the entire string
+
+	
+      	If (Find("acquire started",Temp1$))													//Look for the acqusition tags.
+
+		{
+		Acquire_Active = 1;																	//Set the acquire output line high
+		}
+
+		Else If (Find("acquire is already running",Temp1$))
+
+		{
+		Acquire_Active = 1;																	//Set acquire line low
+		}
+
+		Else If(Find("acquire stopped",Temp1$))
+
+		{
+		Acquire_Active = 0;																	//Set acquire line low
+		}	
+	
+		Else If (Find(ID,Temp1$) && Find("Y ",TEMP1$)&& Find(SN$,TEMP1$))
+		{
+		Pulse (500, ID_SET);
+		Error$ = "ID Set!";	
+		delay (500);																		//When ID matches S/N ID=Set line is high for 5 seconds
+		} 
+        
+
+		Else If (Find ("ERROR:",TEMP1$))
+		{
+		Pulse (500, Error);
+		End =  Find("\x0D\x0A",TEMP1$);
+		Error$ = Mid (TEMP1$,7,End-7);														//If error is found, show error
+		}
+		
+		Else If (Find ("Invalid Command Syntax",TEMP1$))
+		{
+		Pulse (500, Error);
+		Error$ = "Invalid ID/Syntax Error";													//Show error if incorrect ID is set
+		}
+clearbuffer (RX$);																			//Dump the input string
+}
+ 
+
+Push Set_ID
+{
+	Cancelallwait();
+
+If (NEW = 1)																				//Added for new serial number
+	{     																					
+    Error$ = "";
+		If(EXTERNAL = 0)																		//Standard Gateway		
+        {
+		Makestring (TX$,"setr %s %s\r",ID, New_Serial_Number);
+		SN$ = New_Serial_Number;
+		}
+
+		Else If(External=1)																	//Gwexer gateway
+		{
+		Makestring (TX$,"SETRFIDBYT %s %s\r",ID, New_Serial_Number);
+		SN$ = New_Serial_Number;
+		}
+	}
+
+Else																					//make sure you enter an ID thats 8, 0r 7 or 6 digits
+{ 		
+	Error$ = "";																			//Clear error
+	
+	SN$ =ltohex(atol(Serial_Number));
+    
+		If(EXTERNAL = 0)																	//Standard Gateway		
+       		{
+			Makestring (TX$,"setr %s %s\r",ID, SN$);
+			}
+ 
+		Else If(External=1)																	//Gwexer gateway
+			{
+			Makestring (TX$,"SETRFIDBYT %s %s\r",ID, SN$);
+			}
+	}
+ 
+Delay(50);
+	TX$ = "Acq Stop\r";																		//Turn off Acquire mode
+	
+	Delay (50);
+
+	TX$ = "rep\r";
+																							//Request ID report (May take up to 30 seconds)
+	Delay (10);
+
+    	If(ID_SET=0 && Error = 0)                                                          	//ID setting in progress, or error condition present
+		{
+		Error$ = "Setting ID Please wait...";
+		
+		Wait(1500)
+		{																				
+			TX$ = "rep\r";																	//Request status again												
+			Delay (50);																		
+	
+			If(ID_SET=0)																	//If ID still is not reset																	
+			{
+			Error$ = "Please Try Again...";	
+																							//Manually Try again
+			}
+		}
+	}
+}
+
+
+Push Clear																					//Input clear
+{
+
+Cancelallwait();
+Error$ = "";																				//Clears the errors, and cancels all waits
+
+}
+
+/****************************************************************************************************
+ Function Main
+*****************************************************************************************************/

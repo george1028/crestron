@@ -1,0 +1,152 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+*******************************************************************************************/
+/*
+Dealer Name: Crestron Electronics    
+System Name: KD-Fusion Fix
+System Number: 5154
+Programmer: Kevin Dry
+Comments: F.I.A.H.
+*/
+/*******************************************************************************************
+  Compiler Directives
+*******************************************************************************************/
+
+#SYMBOL_NAME "KD-Fusion Fix v1.2"
+#CATEGORY "4" // Device Interface
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+//#ENABLE_TRACE
+#Digital_Expand InputsWithParams						//Expand inputs with parameters
+
+#HELP_BEGIN
+KD-Fusion Fix By Kevin Dry
+***************************************************************
+KD-Fusion Fix By Kevin Dry is designed to 
+create a large string that shows all errors in a Fusion system.
+
+Text fields are reduced to 15 chacterss each due to the 255
+string length limitation. 
+
+The concept was to take all errors of a specific type and send them 
+into this module.  For example you may have 10 touch screens.  Simply
+run all of them to an "OR" and to the Alert input on the module. The 
+corrosponding text field should read TP_OFFLINE.  Alert #2 may be
+a keypad.  Corrosponding text would be KP_OFFLINE. And so-on.
+
+The run line can be set high, or can be set to stop showing alerts.
+
+ 
+#HELP_END
+ 
+
+/*******************************************************************************************
+ DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+*******************************************************************************************/
+
+Digital_Input Run,Update,Alert[20];
+
+String_output Error$,Individual_error$;
+
+/*******************************************************************************************
+ Parameters
+*******************************************************************************************/
+
+STRING_PARAMETER _Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,
+				 _Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,_Skip_,
+				 Active_Text[20][10],_Skip_,Inactive_Text[20][25];
+ 
+/*******************************************************************************************
+ Variables
+*******************************************************************************************/
+
+Integer NumInputs,Q;
+String Error_Text$[550]; 
+   
+/*******************************************************************************************
+ Functions
+*******************************************************************************************/
+Function Create_Single_String()
+{
+Integer x,End,Num_errors;
+
+	IF (Run = 1)
+    {
+		Num_errors = 0;															//Clear Error Counter																	
+		Error_text$ = "";														//Clear error text$
+		Cancelallwait();
+
+		For (x = 1 to NumInputs)												//Loop through each error
+		{													
+        	If (Alert[x] = 1)													//If an error is encountered...
+				{												
+				Num_errors = Num_errors + 1;
+																			//Trace ("Error=%d",Num_errors);
+				Error_text$ = Error_text$ + Active_Text[x] + "-";				//Create ereror string
+																			//Trace ("Error Text =%s",Error_text$);
+				}
+		}																		//End Loop
+	If (Num_errors = 0)															//If there are no errors...
+	{
+	Error$ = "0:Room OK";														//Feedback to Fusion A-OK
+	Wait(1000)																	//Wait							
+	Error$ = "";																//Clearr error (if wait is still active)									
+	}		
+		Else If (Num_errors = 1)												//If there is 1 error we make it a standard error event
+		{
+		End = Find("-",Error_text$);
+		Error_text$ = Mid (Error_text$,1, End - 1);								//Remove the "-" at the end
+		Makestring (Error$,"3:%s",Error_text$);
+		}
+		
+			Else If (Num_errors > 1)											//Greater than 1 error, we show the errors and move it to a more critical status
+			{							
+			Makestring (Error$, "4:Multiple errors found:%s END",Error_text$);	//Send the group string forr the end user to decypher
+			}
+	  }																			//End IF
+}																				//End event
+
+		
+/*******************************************************************************************
+  The Tihs
+*******************************************************************************************/
+                                                                   	
+Change Alert																	//Any alert change
+{
+
+ Q=Getlastmodifiedarrayindex();													//Get the last error state
+
+	If (Alert[Q] =1)															//If the errored input is active...
+	{
+    Makestring (Individual_error$,"2:%s",Active_Text[Q]);
+	}
+
+    Else If (Alert[Q] =0)  														//If the errored input is inactive
+	{
+    makestring (Individual_error$,"0:%s",Inactive_Text[Q]);					
+	Wait (100);																	//Just making Fusion has the code before we clear it					
+	Individual_error$ = "";														//Clear error
+	}
+     
+CALL Create_Single_String();													//Lastly, send out the error
+ }
+
+Change Update
+	{
+	Call Create_Single_String();
+	}
+/*******************************************************************************************
+  Main()
+*******************************************************************************************/
+FUNCTION MAIN()
+	{
+	Waitforinitializationcomplete();
+
+      FOR(NumInputs = 20 to 1 Step -1)											//Figure out how many inputs we are using
+
+      IF(IsSignalDefined(Alert[NumInputs]))
+
+          Break;
+
+	Call Create_Single_String();												//Update string for startup
+    }

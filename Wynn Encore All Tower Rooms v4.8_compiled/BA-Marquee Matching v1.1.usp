@@ -1,0 +1,49 @@
+
+/*
+Dealer Name: Wynn Palace
+System Name:
+System Number:
+Programmer: BAo
+Comments:
+*/
+#SYMBOL_NAME "BA-Marquee Matching v1.1"
+#CATEGORY "10" // Serial
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+                 	
+#INCLUDEPATH "D:\\Box Sync\\Wynn Palace - Source Code\\C#\\StringComparison\\SIMPLSharpStringComparison\\SIMPLSharpStringComparison\\bin\\Debug"
+#USER_SIMPLSHARP_LIBRARY "SIMPLSharpStringComparison"
+           
+STRING_INPUT 
+rx$[500],
+Hostname$[20];
+
+DIGITAL_OUTPUT 
+isInclude;
+
+STRING_OUTPUT 
+Preset$;                         
+                       
+MarqueeCmdMatching tmp;
+  
+CHANGE rx$
+{
+	tmp.setCmd(rx$);
+	tmp.setRoom(Hostname$);
+
+	if (tmp.isInclude() = 1)
+	{	
+		isInclude = 1;	
+		Preset$ = tmp.getPresetValue();
+	}
+	else
+	{	isInclude = 0;	}
+}
+
+FUNCTION Main()
+{
+	WaitForInitializationComplete();
+	isInclude = 0;
+	Preset$ = "Not a Marquee";
+}

@@ -1,0 +1,63 @@
+<Device Model="DIN-AP3">
+   <Network Type="Cresnet" Id="01">
+      <Device Model="C2NI-CB" DeviceId="05" Name="Bath 01 (Master Bath)"/>
+      <Device Model="C2NI-CB" DeviceId="06" Name="Bath 01 WC (Master WC)"/>
+      <Device Model="C2NI-CB" DeviceId="07" Name="Hallway 1"/>
+      <Device Model="C2NI-CB" DeviceId="08" Name="Hallway 2"/>
+      <Device Model="C2NI-CB" DeviceId="09" Name="Small Bath"/>
+      <Device Model="C2NI-CB" DeviceId="10" Name="Small Bath WC"/>
+      <Device Model="C2NI-CB" DeviceId="11" Name="Dressing Room"/>
+      <Device Model="C2NI-CB" DeviceId="12" Name="Massage"/>
+      <Device Model="C2NI-CB" DeviceId="15" Name="Master Bed"/>
+      <Device Model="C2NI-CB" DeviceId="17" Name="Living (1 Bed)"/>
+      <Device Model="GLS-ODT-C-CN" DeviceId="31" Name="Entry"/>
+      <Device Model="GLS-ODT-C-CN" DeviceId="32" Name="Bed Room"/>
+      <Device Model="GLS-ODT-C-CN" DeviceId="33" Name="Living"/>
+      <Device Model="GLS-ODT-C-CN" DeviceId="34" Name="Masssage"/>
+      <Device Model="GLS-ODT-C-CN" DeviceId="35" Name="WC"/>
+      <Device Model="GLS-ODT-C-CN" DeviceId="36" Name="Bath"/>
+      <Device Model="C2N-IO" DeviceId="41" Name="TV 01 (Bed)"/>
+      <Device Model="C2N-IO" DeviceId="42" Name="VOD 01 (Bed)"/>
+      <Device Model="C2N-IO" DeviceId="43" Name="TV 02 (Living)"/>
+      <Device Model="C2N-IO" DeviceId="44" Name="VOD 02 (Living)"/>
+      <Device Model="C2N-IO" DeviceId="45" Name="BLURAY 02 (Living)"/>
+      <Device Model="C2N-UNI8IO" DeviceId="4D" Name="Maid/Privacy"/>
+      <Device Model="DIN-IO8" DeviceId="61" Name="Drapes/Sheers 01 (Bed/Living)"/>
+      <Device Model="DIN-1DIMU4" DeviceId="71" Name="DIN-1DIMU4 Loads 01"/>
+      <Device Model="DIN-1DIMU4" DeviceId="72" Name="DIN-1DIMU4 Loads 02"/>
+      <Device Model="DIN-1DIMU4" DeviceId="73" Name="DIN-1DIMU4 Loads 03"/>
+      <Device Model="DIN-1DIMU4" DeviceId="74" Name="DIN-1DIMU4 Loads 04"/>
+      <Device Model="DIN-1DIMU4" DeviceId="75" Name="DIN-1DIMU4 Loads 05"/>
+      <Device Model="DIN-1DIMU4" DeviceId="76" Name="DIN-1DIMU4 Loads 06"/>
+      <Device Model="DIN-1DIMU4" DeviceId="77" Name="DIN-1DIMU4 Loads 07"/>
+      <Device Model="DIN-1DIMU4" DeviceId="78" Name="DIN-1DIMU4 Loads 08"/>
+      <Device Model="DIN-1DIMU4" DeviceId="79" Name="DIN-1DIMU4 Loads 09"/>
+      <Device Model="DIN-1DIMU4" DeviceId="7A" Name="DIN-1DIMU4 Loads 10"/>
+      <Device Model="DIN-1DIMU4" DeviceId="7B" Name="DIN-1DIMU4 Loads 11"/>
+      <Device Model="DIN-8SW8" DeviceId="81" Name="DIN-8SW8 Switched Loads 01"/>
+      <Device Model="DIN-8SW8" DeviceId="82" Name="DIN-8SW8 Switched Loads 02"/>
+      <Device Model="DIN-8SW8" DeviceId="83" Name="DIN-8SW8 Switched Loads 03"/>
+   </Network>
+   <Network Type="Ethernet" Id="02">
+      <Device Model="Fusion Room" DeviceId="03"/>
+      <Device Model="TSW-1060" DeviceId="06" Name="Entry"/>
+      <Device Model="TSW-1060-NC" DeviceId="10" Name="Bed Left TP"/>
+      <Device Model="TSW-1060-NC" DeviceId="11" Name="Bed Right TP"/>
+      <Device Model="TSW-1060-NC" DeviceId="21" Name="Living"/>
+      <Device Model="CEN-GWEXER" DeviceId="51">
+         <Network Type="RF">
+            <Device Model="CLFI-LDIMUEX" DeviceId="03" Name="Living Table Left (Single)"/>
+            <Device Model="CLF-LDIMUEX" DeviceId="04" Name="Living Table Right"/>
+            <Device Model="CLF-LDIMUEX" DeviceId="05" Name="Living Floor Lamp"/>
+            <Device Model="CLF-LDIMUEX" DeviceId="06" Name="Bed Left (Single)"/>
+            <Device Model="CLF-LDIMUEX" DeviceId="07" Name="Bed Right"/>
+            <Device Model="CLFI-LDIMUEX" DeviceId="08" Name="Bed Table"/>
+            <Device Model="CLF-LDIMUEX" DeviceId="0F" Name="Bed Floor Lamp"/>
+            <Device Model="CLF-LDIMUEX" DeviceId="10" Name="Hallway Table"/>
+            <Device Model="CLWI-DIMUNEX" DeviceId="15" Name="Massage"/>
+            <Device Model="CLF-LDIMUEX" DeviceId="20" Name="Living Desk Lamp"/>
+            <Device Model="CLF-LDIMUEX" DeviceId="21" Name="Living Niche Lamp"/>
+         </Network>
+      </Device>
+   </Network>
+</Device>

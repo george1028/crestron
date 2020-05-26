@@ -1,0 +1,177 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+*******************************************************************************************/
+/*
+Dealer Name:Crestron Electronics    
+System Name:KD-TCPIP Client v1.0
+System Number:5154    
+Programmer:Kevin Dry    
+Comments:F.I.A.H.
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+*******************************************************************************************/
+
+#SYMBOL_NAME "KD-TCPIP Client v1.0"
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#Enable_trace
+
+#HELP_BEGIN
+KD-TCPIP Client v1.0 by Kevin Dry
+
+This module is designed to act as a TCP/IP Client or server
+and allows direct entry of the IP address for scaleable systems.
+
+"Client socket connect"-Make high to connect, and stay connected to a 
+TCP/IP client. (this will retry to connect automaticaly every 5 seconds)
+
+Server connect.  Same as above, however the reconnect is automatic since
+it is set up to listen
+
+IP can be an address, or Hostname.
+
+Port can be ffrom 0-65534.
+
+TX= Transmit to the far end RX and vise versa.
+
+#HELP_END
+
+/*************************************************************************************************
+ IO'zzzz 
+**************************************************************************************************/
+Digital_Input Client_Socket_Connect,_Skip_,
+			  Server_Socket_Connect,_Skip_,_Skip_ ;
+
+String_Input Client_IP$[20],Client_TX$[500],_Skip_,
+			 Server_IP$[20],Server_TX$[500],_Skip_,_Skip_ ;
+ 
+Analog_Input Client_Port,_Skip_,
+			 Server_Port,_Skip_,_Skip_ ;
+
+Digital_Output Client_Connected,_SKIP_, Server_Connected,_Skip_,_Skip_,_Skip_;
+
+String_Output Client_RX$,_Skip_,_Skip_,Server_RX$; 
+  
+/*************************************************************************************************
+ Clients
+**************************************************************************************************/
+
+TCP_Client Client_TCP [500];
+
+TCP_Server Server_TCP [500];
+
+/*************************************************************************************************
+ Variables
+**************************************************************************************************/
+  
+/*************************************************************************************************
+ Function
+**************************************************************************************************/
+Function Connect_Client()												//Actual client connection and retry below
+	{									
+		If(Client_Socket_Connect=1 && Client_Connected <> 1)
+		{																trace ("Conection Go");
+												
+        	Do 															//Try to reconnect (if disconnected) every 10 seconds
+			{
+			Socketdisconnectclient(Client_TCP);
+			Delay (500);          												
+			socketconnectclient(Client_TCP,Client_IP$,Client_Port,0);
+			Delay (500);
+			}
+         	Until (Client_Connected = 1 || Client_Socket_Connect =0 );	//BREAK the loop if the client connects, OR if the socket is disconnected intentionaly																				
+		}
+ } 
+/*************************************************************************************************
+ Events
+**************************************************************************************************/
+Socketconnect Client_TCP												//Client connect show status
+	{
+	Client_Connected = 1;
+	//Client_status = Client_TCP.SocketStatus;							//Additional status
+	}
+
+Socketdisconnect Client_TCP												//Socket Disconnect Show status
+	{
+	Client_Connected = 0;												//Update status
+	Delay (100);
+	Call Connect_Client();												//Reconnect client (If necessary in Function)
+	//Client_status = Client_TCP.SocketStatus;							//Update Status
+	}
+ 
+Socketreceive Client_TCP												//Passs incomming commands
+    {																	
+	Client_RX$ = Client_TCP.SocketRxBuf;    
+	Clearbuffer (Client_TCP.SocketRxBuf); 								//Clear the recieve buffer
+	}
+//////////////////////////////////////////////////////////////////////////Server side					 
+
+Socketconnect Server_TCP												//Server Connect show status
+	{
+	Server_Connected = 1;
+	//status = Server_TCP.SocketStatus;									//Additional status
+	}
+
+Socketdisconnect Server_TCP												//Socket Disconnect show status
+	{
+	server_Connected = 0;
+																		//Pass status
+	}	
+ 
+Socketreceive Server_TCP
+    {																	//Passs incomming commands
+	Server_RX$ = Server_TCP.SocketRxBuf;    
+	Clearbuffer (Server_TCP.SocketRxBuf); 								//Clear incomming RX buffer
+	}
+
+/*************************************************************************************************
+ The Tihs
+**************************************************************************************************/
+//////////////////////////////////////////////////////////////////////////Client Side
+ 
+Push Client_Socket_Connect												//Start the TCP/IP Connection
+	{
+    Call Connect_Client(); 	
+																		trace ("Conection Statred!");
+	}
+
+Release Client_Socket_Connect											//End the connection
+	{
+	socketdisconnectclient(Client_TCP);
+	}
+
+Change Client_TX$														//When the input from the TCPIP client changes
+	{
+	socketsend(Client_TCP, Client_TX$);									//Pas the value
+	trace ("Client = %s",Client_TX$);
+	}
+
+//////////////////////////////////////////////////////////////////////////Server Side
+
+Push Server_Socket_Connect												//Start the TCP/IP Connection
+	{
+   socketserverstartlisten (Server_TCP,Server_IP$,Server_Port);
+	}
+
+Release Server_Socket_Connect											//End the connection
+	{
+	socketserverstoplisten(Server_TCP);
+	}
+
+Change Server_TX$														//When the input from the TCP/IP server changes
+	{
+	socketsend(Server_TCP, Server_TX$);									//Pass the value
+	trace ("Serverr %s",Server_TX$);	
+}
+
+/****************************************************************************************************
+ Function Main
+*****************************************************************************************************/
+Function Main()
+{
+Waitforinitializationcomplete();
+Client_Connected = 0;
+
+}

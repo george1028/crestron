@@ -1,0 +1,359 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+  (Fill in comments below)
+*******************************************************************************************/
+/*
+Dealer Name: Crestron Electronics, Inc.
+System Name:
+System Number:
+Programmer: LP/KD
+Comments:
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+  (Uncomment and declare compiler directives as needed)
+*******************************************************************************************/
+#SYMBOL_NAME "Samsung Hotel v2.4 Processor"
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+
+#HELP_BEGIN
+To be used with the Samsung LN40B550 Hotel umc only.
+Not to be used as a stand-alone module.
+#HELP_END
+
+
+/*******************************************************************************************
+  Include Libraries
+  (Uncomment and include additional libraries as needed)
+*******************************************************************************************/
+// #CRESTRON_LIBRARY ""
+// #USER_LIBRARY ""
+
+/*******************************************************************************************
+  DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+  (Uncomment and declare inputs and outputs as needed)
+*******************************************************************************************/
+DIGITAL_INPUT Channel_Send; 
+DIGITAL_INPUT Volume_Up, Volume_Down,Enable_Ch_FB,Reset_mute, Tune[14];
+ANALOG_INPUT Channel_Request; 
+STRING_INPUT String_To_Send[100]; 
+BUFFER_INPUT From_Device[200]; 
+
+DIGITAL_OUTPUT TV_Is_On, TV_Is_Off, CC_Is_On, CC_Is_Off, TV_Signal_Valid, TV_Signal_Invalid;
+DIGITAL_OUTPUT OSD_Is_On, OSD_Is_Off;
+DIGITAL_OUTPUT Mute_Is_On, Mute_Is_Off;
+
+ANALOG_OUTPUT  Aux_Input_Value, Volume,Current_Channel;  
+STRING_OUTPUT To_Device, Channel_Text,Gathered, sDebug; 
+
+/*******************************************************************************************
+  Global Variables
+  (Uncomment and declare global variables as needed)
+  Note:  Be sure to initialize all declared STRING variables as needed
+         For example, in Function Main: myString = "";
+*******************************************************************************************/
+INTEGER a, b, iCheckSum, iSemaphore, iSemaphore1, iCounter, iLoc1, iLoc2, iLoc3, iDataByte, iCheckSumByte;
+INTEGER iReceiveCheckSum, iVolume, iTuneVal, iMajor, iMinor;
+// LONG_INTEGER
+// SIGNED_INTEGER
+// SIGNED_LONG_INTEGER
+STRING sTemp[100], sTempIn[100], sTemp2[100], sChannelSend[100], sCommand[2], sData[100];
+STRING sVolume[10], sTuneVal[10], sTuneTemp[10],Trash[100];
+
+/*******************************************************************************************
+  Event Handlers
+  (Uncomment and declare additional event handlers as needed)
+*******************************************************************************************/
+
+PUSH Channel_Send
+{
+	makestring(sChannelSend, "\x58\x80\x0A\x01%s", chr(Channel_Request));		//Chaned send command
+	iCheckSum = 0;
+	sTemp = sChannelSend;
+	for(a = 1 to len(sTemp))
+	{
+		iCheckSum = iCheckSum + getc(sChannelSend);
+	}
+	To_Device = sTemp + chr(iCheckSum);
+}
+
+PUSH Tune
+{
+	iTuneVal = getlastmodifiedarrayindex();
+	if(Enable_Ch_FB)
+		clearbuffer(sTuneVal);
+	switch(iTuneVal)
+	{
+		case(1):	// 1
+			sTuneVal = sTuneVal + "1";
+		case(2):	// 2
+			sTuneVal = sTuneVal + "2";
+		case(3):	// 3
+			sTuneVal = sTuneVal + "3";
+		case(4):	// 4
+			sTuneVal = sTuneVal + "4";
+		case(5):	// 5
+			sTuneVal = sTuneVal + "5";
+		case(6):	// 6
+			sTuneVal = sTuneVal + "6";
+		case(7):	// 7
+			sTuneVal = sTuneVal + "7";
+		case(8):	// 8
+			sTuneVal = sTuneVal + "8";
+		case(9):	// 9
+			sTuneVal = sTuneVal + "9";
+		case(10):	// 0
+			sTuneVal = sTuneVal + "0";	
+		case(11):	// dash
+		{
+			if((sTuneVal <> "") && (find("-", sTuneVal) = 0))
+				sTuneVal = sTuneVal + "-";
+		}
+		case(12):	// delete
+		{
+			if(len(sTuneVal) > 1)
+				sTuneVal = left(sTuneVal, len(sTuneVal) - 1);
+		}
+		case(13):	// clear
+			sTuneVal = "";
+		case(14):	// enter
+		{
+			if(len(sTuneVal) > 0)
+			{
+				iLoc3 = find("-", sTuneVal);
+				print("iLoc3=%d sTuneVal=%s sTuneValLength=%d\n", iLoc3, sTuneVal, len(sTuneVal));	
+				if(iLoc3 <> 0)
+				{
+					iMajor = atoi(left(sTuneVal, iLoc3 - 1));
+					iMinor = atoi(right(sTuneVal, len(sTuneVal) - iLoc3));
+				}
+				else
+				{
+					iMajor = atoi(sTuneVal);
+					iMinor = 0;
+				}
+				print("iMajor=%d iMinor=%d\n", iMajor, iMinor);
+                makestring(sTuneTemp, "\x58\x80\x29\x04%s%s%s%s", chr(iMajor / 0x0100), chr(iMajor mod(0x100)), chr(iMinor / 0x0100), chr(iMinor mod(0x100)));
+
+				iCheckSum = 0;
+				sTemp = sTuneTemp;
+				for(a = 1 to len(sTemp))
+				{
+					iCheckSum = iCheckSum + getc(sTuneTemp);
+				}
+				To_Device = sTemp + chr(iCheckSum);
+			}
+		}		
+	}
+	Channel_Text = sTuneVal;
+}
+
+PUSH Volume_Up
+{
+	if(iVolume < 100)
+		iVolume = iVolume + 1;
+	makestring(sVolume, "\x58\x80\x0D\x02%s", chr(iVolume));				//Changed send string
+	iCheckSum = 0;
+	sTemp = sVolume;
+	for(a = 1 to len(sTemp))
+	{
+		iCheckSum = iCheckSum + getc(sVolume);
+	}
+	To_Device = sTemp + chr(iCheckSum);
+}
+
+
+PUSH Volume_Down
+{
+	if(iVolume > 0)
+		iVolume = iVolume - 1;
+	makestring(sVolume, "\x58\x80\x0D\x02%s", chr(iVolume));				//Changed send string
+	iCheckSum = 0;
+	sTemp = sVolume;
+	for(a = 1 to len(sTemp))
+	{
+		iCheckSum = iCheckSum + getc(sVolume);
+	}
+	To_Device = sTemp + chr(iCheckSum);
+}
+
+THREADSAFE CHANGE String_To_Send
+{
+	iCheckSum = 0;
+	sTemp = String_To_Send;
+	for(a = 1 to len(String_To_Send))
+	{
+		iCheckSum = iCheckSum + getc(String_To_Send);
+	}
+	To_Device = sTemp + chr(iCheckSum);
+}
+
+
+THREADSAFE CHANGE From_Device
+{
+	if(iSemaphore1 = 0)
+	{
+		iSemaphore1 = 1;
+		iCounter = 0;
+		while(find("\x58", From_Device) <> 0 && len(From_Device) > 6)	// if header is found and From_Device buffer is at least the mimumum required string length (6)
+		{
+
+			If(find("\x58\x00\x00\x01\x02\x5B",From_Device))				//Some light house keeping for strings we do not need!
+			{
+			Trash = Remove ("\x58\x00\x00\x01\x02\x5B",From_Device);
+			Trash = "";
+			clearbuffer (From_Device);
+			}
+			
+			If(find("\x58\x00\x00\x01\x03\x5C",From_Device))
+			{
+			Trash = Remove ("\x58\x00\x00\x01\x02\x5C",From_Device);
+			Trash = "";
+			clearbuffer (From_Device);
+			}
+
+			if(iCounter > 5)	// 2nd attempt at parsing valid return string from From_Device buffer (Was 10)	
+			break;
+			
+
+			iLoc1 = find("\x58", From_Device);
+
+			if (iLoc1 + 3 <= len(From_Device))     //(iLoc1 <> 0) &&		
+			{
+				
+				iDataByte = byte(From_Device, iLoc1 + 3);	// get data length byte
+				iLoc2 = iDataByte + iLoc1 + 4;	// find end of string location
+				sTemp2 = mid(From_Device, iLoc1, iLoc2 - (iLoc1 - 1));	// parse out response string
+				iCheckSumByte = byte(sTemp2, len(sTemp2));	// get checksum byte
+ 				iReceiveCheckSum = 0;
+				for(b = 1 to (len(sTemp2) - 1))	// calculate checksum
+				{
+					iReceiveCheckSum = iReceiveCheckSum + byte(sTemp2, b);
+				}
+				iReceiveCheckSum = iReceiveCheckSum & 0x00FF;
+				if(iReceiveCheckSum = iCheckSumByte)	// if calculated checksum = checksum byte
+				{
+					sTempIn = remove(chr(iCheckSumByte), From_Device, iLoc2 - 1);	// sTemp
+					sTempIn = right(sTempIn, len(sTemp2));
+					sDebug = sTempIn;
+					Gathered = sTempIn;
+					sCommand = mid(sTempIn, 2, 2);
+					if(iDataByte <> 0)
+						sData = mid(sTempIn, 5, iDataByte);
+					sDebug = sCommand;
+					sDebug = sData;
+
+                	if(sCommand = "\x00\x01")							//Changed commands							
+					{
+						if(bit(sData, 1, 4) = 1)	// power status		//OK
+						{
+							TV_Is_Off = 0;
+							TV_Is_On = 1;
+						}
+						else
+						{
+							TV_Is_On = 0;
+							TV_Is_Off = 1;
+						}
+
+						if(bit(sData, 1, 3) = 1)	// cc status		//OK
+						{
+							CC_Is_Off = 0;
+							CC_Is_On = 1;
+						}
+						else
+						{
+							CC_Is_On = 0;
+							CC_Is_Off = 1;
+						}
+
+						if(bit(sData, 1, 2) = 1)	//	tv signal status		//OK			
+			{
+							TV_Signal_Invalid = 0;
+							TV_Signal_Valid = 1;
+						}
+						else
+						{
+							TV_Signal_Valid = 0;
+							TV_Signal_Invalid = 1;
+						}
+						
+						if(bit(sData, 1, 1) = 1)	//	osd status
+						{
+							OSD_Is_Off = 0;
+							OSD_Is_On = 1;
+						}
+						else
+						{
+							OSD_Is_On = 0;
+							OSD_Is_Off = 1;
+						}
+						
+						if(bit(sData, 1, 7) = 1)	//	aux input enabled or disabled
+						{
+							Current_Channel = 0;
+							Aux_Input_Value = Low(byte(sData, 3));
+ 
+						}
+						else
+						{
+							Aux_Input_Value = 7;
+							Current_Channel = byte(sData, 3)&0x00FF;
+						}
+					}
+
+
+                	else if(sCommand = "\x00\x0F")
+					{
+						if(bit(sData, 1, 7) = 1)	// mute status
+						{
+							Mute_Is_Off = 0;
+							Mute_Is_On = 1;
+							Volume = byte(sData, 1) - 0x0080; 
+						}
+						else
+						{
+							Mute_Is_On = 0;
+							Mute_Is_Off = 1;
+							Volume = byte(sData, 1)- 0x0080; 
+						}
+						iVolume = Volume;		
+					}				
+					processlogic();
+				}
+			}  
+			iCounter = iCounter + 1;
+		}
+		iSemaphore1 = 0;		
+	}
+	If (Len(From_Device) > 90)
+		{
+		Clearbuffer (From_Device);			
+		}
+}
+
+Push Reset_Mute
+	{
+	Mute_Is_On = 0;
+	Mute_Is_Off = 1;
+	}
+/*******************************************************************************************
+  Main()
+  Uncomment and place one-time startup code here
+  (This code will get called when the system starts up)
+*******************************************************************************************/
+
+Function Main()
+{
+	iSemaphore1 = 0;
+	iVolume = 0;
+	Volume = 0;
+	TV_Is_Off = 1;
+	TV_Is_On = 0;
+	clearbuffer(sTuneVal);
+}
+
+

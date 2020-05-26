@@ -1,0 +1,76 @@
+/*******************************************************************************************
+  Compiler Directives
+*******************************************************************************************/
+// #ENABLE_DYNAMIC
+// #SYMBOL_NAME ""
+// #HINT ""
+// #DEFINE_CONSTANT
+// #CATEGORY "" 
+// #PRINT_TO_TRACE
+// #DIGITAL_EXPAND 
+// #ANALOG_SERIAL_EXPAND 
+// #OUTPUT_SHIFT 
+// #HELP_PDF_FILE ""
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+// #ENCODING_ASCII
+// #ENCODING_UTF16
+// #ENCODING_INHERIT_FROM_PARENT
+// #ENCODING_INHERIT_FROM_PROGRAM
+
+#HELP_BEGIN
+   This module is designed to be used with FCS for feedback control of messages posted to Fusion. Serial string format is designed to send processor time/date stamp plus the mesage for FCS. Module will also retain current MUR/DND status for room on reboot
+
+DIGITAL_INPUT 
+	Do_Not_Disturb			Pulse to set Do Not Disturb. Recommend adding debounce prior to input.
+	Make_Up_Room 			Pulse to set Make Up Room. Recommend adding debounce prior to input.
+ 
+STRING_OUTPUT 
+	DND_MUR_Time$			Output String formatted with date, time, and status of the module (Make Up Room On/Off, Do Not Disturb On/Off). Can be customized using Do Not Disturb Message and Make Up Room Message parameters.
+
+#HELP_END
+
+
+/*******************************************************************************************
+  DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+*******************************************************************************************/
+DIGITAL_INPUT Do_Not_Disturb;
+DIGITAL_INPUT Make_Up_Room; 
+
+STRING_OUTPUT DND_Time$; 
+STRING_OUTPUT MUR_Time$;
+
+
+/*******************************************************************************************
+  Parameters
+*******************************************************************************************/
+STRING_PARAMETER Separator[1];
+STRING_PARAMETER Do_Not_Disturb_On_Msg[35];
+STRING_PARAMETER Do_Not_Disturb_Off_Msg[35];
+STRING_PARAMETER Make_Up_Room_On_Msg[35];
+STRING_PARAMETER Make_Up_Room_Off_Msg[35];
+
+/*******************************************************************************************
+  Event Handlers
+*******************************************************************************************/
+
+PUSH Do_Not_Disturb
+{	
+	MAKESTRING(DND_Time$,"%s%s%s%s%s",Date(1),Separator,Time(),Separator,Do_Not_Disturb_On_Msg);
+}
+
+RELEASE Do_Not_Disturb
+{
+    MAKESTRING(DND_Time$,"%s%s%s%s%s",Date(1),Separator,Time(),Separator,Do_Not_Disturb_Off_Msg);
+}
+
+PUSH Make_Up_Room
+{	
+	MAKESTRING(MUR_Time$,"%s%s%s%s%s",Date(1),Separator,Time(),Separator,Make_Up_Room_On_Msg);
+}
+
+RELEASE Make_Up_Room
+{
+    MAKESTRING(MUR_Time$,"%s%s%s%s%s",Date(1),Separator,Time(),Separator,Make_Up_Room_Off_Msg);
+}

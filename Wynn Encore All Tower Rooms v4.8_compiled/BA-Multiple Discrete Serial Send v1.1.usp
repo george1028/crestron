@@ -1,0 +1,65 @@
+
+/*
+Dealer Name: Wynn Palace Macau  
+System Name: BA-Multiple Discrete Serial Send v1.1
+Programmer: Bella Ao
+Comments: 
+*/
+
+#SYMBOL_NAME "BA-Multiple Discrete Serial Send v1.1"
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+//#ENABLE_Trace					
+#CATEGORY "10" // Serial
+
+#Define_Constant ARRAY_SIZE 256
+
+                           
+//INPUT
+DIGITAL_INPUT Clear,_SKIP_,Select[ARRAY_SIZE];
+STRING_INPUT _SKIP_,sin$[ARRAY_SIZE][256];
+
+//OUTPUT
+STRING_OUTPUT sout$;
+
+//Variable
+Integer NumInputs;
+
+          
+//EVENT
+PUSH Clear
+{
+ 	MakeString(sout$, "");
+}
+
+PUSH Select
+{
+	sout$ = sin$[GetLastModifiedArrayIndex()];
+}
+
+CHANGE sin$
+{
+	INTEGER i;
+
+	FOR (i=1 to NumInputs)
+	{
+    	if (Select[i] = 1)
+		{
+        	sout$ = sin$[i];
+		}
+	} 
+}
+
+//MAIN
+FUNCTION Main()
+{
+	Waitforinitializationcomplete();																						//Set the update to zero.
+
+FOR(NumInputs = 100 to 1 Step -1)                //Get the number of inputs defined
+       {
+       IF(IsSignalDefined(Select[NumInputs]))
+
+          Break; 
+         }
+
+}

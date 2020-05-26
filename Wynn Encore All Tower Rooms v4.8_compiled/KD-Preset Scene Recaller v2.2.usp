@@ -1,0 +1,491 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+*******************************************************************************************/
+/*
+Dealer Name:Crestron Electronics   
+System Name:KD-Preset Scene Recaller v2.2
+System Number:5154    
+Programmer:Kevin Dry    
+Comments:F.I.A.H.
+*/
+/*******************************************************************************************
+ Compiler Directives
+*************************************************************************************************/
+
+#SYMBOL_NAME "KD-Preset Scene Recaller v2.2"
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+//#ENABLE_Trace																					//Debug disabled
+
+#Define_Constant Max_Value 20
+
+#HELP_BEGIN
+KD-Preset Scene Recaller v2.2
+
+This module is designed to support 9 Scenes and 20 loads.  It requires
+that the file be loaded for scene recall.
+
+The file is a standard .csv excel document that should look like this:
+
+1	Fade Rate	Load Name		ALL ON	Scene 1	 Scene 2	Scene 3  	Scene 4  	Scene 5	  Scene 6	Scene 7 	Scene 8	 Relay Off||
+                    /////////////////////////////////
+1) Each section is an individual cell.  the first cell is the preset place holder,
+   and ultimatly could be in any order pending all numbers from 1 to 20 are included.
+2) All spaces need to be present.  The cells are arranged as follows:
+
+Marker  Fade Rate 	Load Name	ALL ON	Scene 1	 Scene 2	Scene 3  	Scene 4  	Scene 5	  Scene 6	Scene 7 	Scene 8	   Relay Off   end_line_pipes
+
+Be sure to set the print area that includes all used cells.
+
+Fade rate (In place of  only utelizes the first 9 spaces.  Entries can look like this:
+
+1) Fade Rate (Currently unused) "200"    (No Quotes)System converts to Ticks and therefore 200 = 2 seconds
+2) Load Name Up to 650 chaccters
+3) Scene Value "0" "0%"  "10" "10%" "100" "100%" (No Quotes) all are acceptable
+4) Relay Off (0 = off, 1= ALways On)
+ 
+File Path:
+
+\\NVRAM\\Lighting\\Wynn Preset Lineup v1.1.csv  (Example) 
+
+Where NVRAM is the location, Lighting is the program slot, and the next portion is the 
+full name with file type at the end.  In this case the document is a .csv (Comma Seperated Value)
+
+Do not use numbers in the room names!!! This will more than likely cause issues with  reading the file properly 
+(Imagine you use the room name of "35" and your first level is 35%....)
+
+v1.3.  Changed behavor of the file complete to alwasys pulse even if the file read fails.
+	   Changed behavor of the file read error in the SIMPL windows side to stay high when an error
+is present. (Interlocked)
+
+v1.4.  Changed the scene outputs to update at startup, rather than each time the preset was called.  
+This way there is minimal S+ happening while the analogs are being sent. Also modified the preset
+output to be a pulse, with  interlocks tied to each output.  This way multiple scenes can be 
+matched. 
+   
+v1.6  Added the ability to switch on the fly rooom names from the prefix$ input.  This allows common room names
+with more room types (type A bedroom, type B bedroom) where "type A, or B" is the Prefix$ input. (Be careful with numbers!!)
+
+v1.7  Improved the search portion to minimize errors, while inceasing overall document
+size.
+
+v1.8  Added 20 lines of fade rate outputs so we can manipulate each individual load type.
+
+v1.9 Added the Relay On catagory so we can leave a relay on for some LED drivers (0-10VDC as well).
+     Added MAX_Value as a constant for future updates. (Internal to this module only)
+
+v2.2 Removed some un-necessary parsing at the All Off stage.
+
+#HELP_END
+
+/*************************************************************************************************
+ IO'zzzzzzz 
+**************************************************************************************************/
+
+Digital_Input Update,Update_FB,_Skip_;
+
+Digital_Input _SKIP_,_SKIP_,_SKIP_,ALL_OFF,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_;
+
+String_Input Prefix$[100];
+
+Analog_Input  _SKIP_,Load_In[20];
+
+////////////////////////////////
+ 
+Analog_Output _SKIP_,_SKIP_,Scene1[Max_Value],_SKIP_,Scene2[Max_Value],_SKIP_,Scene3[Max_Value],_SKIP_,Scene4[Max_Value],_SKIP_,Scene5[Max_Value],_SKIP_,Scene6[Max_Value],_SKIP_,Scene7[Max_Value],_SKIP_,Scene8[Max_Value],_SKIP_,Scene9[Max_Value];
+ 
+Digital_Output Updating,File_read_error,Complete,Send_Ramp,_SKIP_,_SKIP_,Current_Scene[9],_SKIP_;
+
+Analog_Output _SKIP_,Max_Values[20],_SKIP_,Fade_Rate[Max_Value],_SKIP_,Off_Level[Max_Value],_SKIP_;//Added off level 
+
+String_Output Load_Name_Out$[20];
+
+////////////////////////////////
+
+/*************************************************************************************************
+ Parameters
+*************************************************************************************************/
+
+String_Parameter _SKIP_,_SKIP_,_SKIP_,File_path$[255],Room_Name[25],Next_Room[25];
+
+/*************************************************************************************************
+ Variables
+**************************************************************************************************/
+
+String Load_Name$[20][75];
+
+Integer Busy,iCurrent_Scene,iFadeRate[Max_Value],iScene_1[Max_Value],iScene_2[Max_Value],iScene_3[Max_Value],iScene_4[Max_Value],iScene_5[Max_Value]
+					 ,iScene_6[Max_Value],iScene_7[Max_Value],iScene_8[Max_Value],iScene_9[Max_Value],Scene[Max_Value],iScene_OFF[Max_Value];
+	
+/*************************************************************************************************
+ Function
+**************************************************************************************************/
+
+Function Fade_Rate_Update()															//Used for the fade rate for each scene
+{
+Integer X;
+    
+	For (X = 1 to Max_Value)
+    {
+	Fade_Rate[x] = iFaderate[x];													//This sets the fade rate
+	}
+}
+
+Function Scene_Default()															//Just in case the file does not exist, this sets the lights to full on all scenes
+{
+Integer x;
+    
+	For (X = 1 to Max_Value)
+    {
+	 iScene_1[x] = 60000;
+	 iScene_2[x] = 50000;
+	 iScene_3[x] = 40000;
+	 iScene_4[x] = 30000;
+	 iScene_5[x] = 20000;
+	 iScene_6[x] = 20000;
+	 iScene_7[x] = 9000;
+	 iScene_8[x] = 8000;
+	 iScene_9[x] = 7000;
+	 Fade_Rate[x] = 200;																//Default fade rate (2 seconds)
+     }
+}
+ 
+Function Update_Scenes()																	
+	{
+																					
+Integer X;	
+	 				
+	For (X = 1 to Max_Value)															//Updates all Preset Values
+	{
+   	Scene1[x] = iScene_1[x];
+	Scene2[x] = iScene_2[x];
+	Scene3[x] = iScene_3[x];
+	Scene4[x] = iScene_4[x];
+	Scene5[x] = iScene_5[x];
+	Scene6[x] = iScene_6[x];
+	Scene7[x] = iScene_7[x];
+	Scene8[x] = iScene_8[x];
+	Scene9[x] = iScene_9[x];
+	iCurrent_Scene = 10;	
+	}																																		
+}
+
+Function Update_Load_Names()															//Sends the names of eack load out
+{
+Integer X;																				//Local Variable
+
+	For (X = 1 to Max_Value)																	//Loop
+    {
+	Load_Name_Out$[x] = Load_Name$[x];													//Stored name, into the output side
+	}
+ }
+
+Function Update_Max_Values()															//Send max values for the ramp calculators
+{
+
+Integer X;																				//Local variable
+
+Processlogic();																			//DO LAST
+
+	For (X = 1 TO Max_Value)																	//Loop through all preset values
+ 	{ 
+
+		If (All_Off = 1)																//Scene = All on (Scene 1)
+		{
+		Max_Values[X] = iScene_1[X];
+		iCurrent_Scene = 1;																//Set the current scene to 1
+		}
+		Else If (iCurrent_Scene = 1) 													//Scene 1
+		{
+		Max_Values[X] = iScene_1[X];
+		}
+		Else If (iCurrent_Scene = 2) 													//Scene 2
+		{
+		Max_Values[X] = iScene_2[X];
+		}
+		Else If (iCurrent_Scene = 3) 													//Scene 3
+		{
+		Max_Values[X] = iScene_3[X];
+		}
+		Else If (iCurrent_Scene = 4) 													//Scene 4
+		{
+		Max_Values[X] = iScene_4[X];
+		}
+		Else If (iCurrent_Scene = 5) 													//Seeing a patern yet??  Scene 5 ect...
+		{
+		Max_Values[X] = iScene_5[X];
+		}
+		Else If (iCurrent_Scene = 6) 
+		{
+		Max_Values[X] = iScene_6[X];
+		}
+		Else If (iCurrent_Scene = 7) 
+		{
+		Max_Values[X] = iScene_7[X];
+		}
+		Else If (iCurrent_Scene = 8) 
+		{
+		Max_Values[X] = iScene_8[X];
+		}
+		Else If (iCurrent_Scene = 9) 
+		{
+		Max_Values[X] = iScene_9[X];
+		}
+        Else
+		{
+		Max_Values[X] = iScene_1[X];													//Repairs a Start-Up issue where the slider woud not work after initialization
+		}
+					
+	}																					//Trace ("iCurrent_Scene=%d",iCurrent_Scene); 
+}
+
+Function Off_Value()
+{
+	Integer X;
+	For (X = 1 to Max_Value)															//Loop
+    {
+	Off_Level[x] = iScene_OFF[x];														//NEW OFF Value LOGIC-----------------------------------------
+	}
+ }
+
+Function Feedback()																		//Feedback Calculator section
+{
+Integer X;
+
+Processlogic();																			//DO LAST
+
+For(X = 1 to 10)																		//Clear the current scene, and clear the feedback counter for each scene
+ 	{
+    Scene[x]=0;
+   	}
+
+	For(X = 1 to Max_Value)																	//Loop all inputs/scenes
+ 	{
+		If (Load_In[x] > iScene_1[X]-1 && Load_In[x] < iScene_1[X] + 36)				//The math is used bacause we are thrwing out the "35" from 65535.
+		{																				//Example:  100d = 65500 rather than 65535
+		Scene[1] = Scene[1] + 1;														//Add (1) to the scene counter for this input
+		}	
+		If (Load_In[x] > iScene_2[X]-1 && Load_In[x] < iScene_2[X] + 36)				//Same as above.  See below for the next step...
+		{
+		Scene[2] = Scene[2] + 1;
+		}
+		If (Load_In[x] > iScene_3[X]-1 && Load_In[x] < iScene_3[X] + 36)
+		{
+		Scene[3] = Scene[3] + 1;
+		}
+		If (Load_In[x] > iScene_4[X]-1 && Load_In[x] < iScene_4[X] + 36)
+		{
+		Scene[4] = Scene[4] + 1;
+		}
+		If (Load_In[x] > iScene_5[X]-1 && Load_In[x] < iScene_5[X] + 36)
+		{
+		Scene[5] = Scene[5] + 1;
+		}
+		If (Load_In[x] > iScene_6[X]-1 && Load_In[x] < iScene_6[X] + 36)
+		{
+		Scene[6] = Scene[6] + 1;
+		}
+		If (Load_In[x] > iScene_7[X]-1 && Load_In[x] < iScene_7[X] + 36)
+		{
+		Scene[7] = Scene[7] + 1;
+		}
+		If (Load_In[x] > iScene_8[X]-1 && Load_In[x] < iScene_8[X] + 36)
+		{
+		Scene[8] = Scene[8] + 1;
+		}
+		If (Load_In[x] > iScene_9[X]-1 && Load_In[x] < iScene_9[X] + 36)
+		{
+		Scene[9] = Scene[9] + 1;
+		}
+        If (Load_In[x] = 0)
+		{
+		Scene[10] = Scene[10] + 1;
+		}
+	}																					//Count complete
+
+	For (x = 1 to 9)																	//Loop through the scene counters
+	{
+		If (Scene[x] = Max_Value)																//If a scene = 20 (this means all values are identical)
+		{				
+		Pulse(10,Current_Scene[X]);														//Set the current sccene value
+		iCurrent_Scene = x;																										
+     	}																				//End for loop
+	}	
+
+Call Update_Max_Values();																//Update the slider values
+}
+
+Function Parse_File()
+{
+	SIGNED_INTEGER nFileHandel;															//Local integer
+	Integer iPosition,iEnd;																//Position markers
+	String Temp1$[1000],Temp2$[1000],Room_Name$[50],Next_Room$[50],Data_Buffer$[65534],Data_Buffer1$[10000],Trash[30000];										//Temp strings
+
+If (Updating = 0)																		//GO-NOGO
+	{	
+
+StartFileOperations();																	//Start file operations
+
+	nFileHandel = FileOpen ( File_path$, _O_RDONLY  | _o_Text );
+                                                                                   	 	//"\\NVRAMDISK\\Channel XYZ.csv"
+		If(nFileHandel < 0) 
+		{
+		Pulse (50 ,File_Read_Error);													//Report error
+		Call Scene_Default();															//A little extra protection just in case the file gets zapped!
+		}	
+
+	 		Makestring(Room_Name$, "%s %S",Prefix$,Room_Name);							//Add the prefix to the room name.  This should allow for one congruent file for all room types
+           Trace ("%s = ",Room_Name$);
+    		Makestring(Next_Room$, "%s %S",Prefix$,Next_Room);	Trace ("%s",Prefix$);
+																Trace ("nFileHandel= %d", nFilehandel);															                                            
+      While(FileRead(nFileHandel, data_Buffer1$, 10000) > 0)							//Chunk the read file out to 10000 chacters max
+   		{
+
+        Data_Buffer$ = Data_Buffer$ + Data_Buffer1$;									//Add the data together in case pasrsing starts in between
+																Trace ("  %s", Data_Buffer$);
+        If(Find(Prefix$,Data_Buffer$))
+		{
+		}
+			Else
+			{
+			Clearbuffer (Data_Buffer$);
+			Clearbuffer (Data_Buffer1$);												//Clears the buffer and allows the next chunk
+			}
+		
+		If(Find(Room_Name$,Data_buffer$) && Find(Next_Room$,Data_buffer$))
+		{
+          														Trace ("Working...");
+
+		Updating = 1;
+		Trash = Remove (Room_Name$,Data_buffer$);										//Look for the current room the presets should be part of
+		Trash = "";
+		data_Buffer$ =Remove (Next_Room$,Data_Buffer$);									//Remove up to the end of the desireed room
+					
+		While( Find("||",Data_Buffer$))													//Search for the end line marker 
+		{
+		Temp1$ = Remove("||",Data_Buffer$);												//Remove the next field up to the "||"
+																					
+		Temp2$ = Remove(",",Temp1$);													//Remove the next field up to the ","
+		iEnd = Find    (",",Temp2$);													//Find the "," as the marker for the next section				
+        iPosition = atoi (Left (Temp2$,iEnd-1));										//Get the position marker
+  		Clearbuffer (Temp2$);															//Clear the temp string
+																					
+		Temp2$ = Remove(",",Temp1$);													//Remove the next field up to the ","
+		iEnd = Find    (",",Temp2$);													//Find the "," as the marker for the next section				
+        iFadeRate[iPosition] = atoi(Left (Temp2$,iEnd-1));								//Get the position marker
+  		Clearbuffer (Temp2$);
+																						//Print ("iPosition %d",iPosition);															
+		Temp2$ = Remove(",",Temp1$);													//Remove the next field up to the ","
+		iEnd = Find	   (",",Temp2$);													//Find the "," as the marker for the next section																
+        Load_Name$[iPosition] =Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);													//Continue on for each Preset 2 through 9
+		iEnd = Find    (",",Temp2$);																													
+        iScene_1 [iPosition] = 655 * atoi(Left(Temp2$,iEnd-1));									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        iScene_2 [iPosition] = 655 * atoi(Left(Temp2$,iEnd-1));									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        iScene_3 [iPosition] = 655 * atoi(Left(Temp2$,iEnd-1));									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        iScene_4 [iPosition] = 655 * atoi(Left(Temp2$,iEnd-1));										
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        iScene_5 [iPosition] = 655 * atoi(Left(Temp2$,iEnd-1));										
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        iScene_6 [iPosition] = 655 * atoi(Left(Temp2$,iEnd-1));										
+		clearbuffer (Temp2$);			
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        iScene_7 [iPosition] = 655 * atoi(Left(Temp2$,iEnd-1));										
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        iScene_8 [iPosition] = 655 * atoi(Left(Temp2$,iEnd-1));										
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        iScene_9 [iPosition] = 655 * atoi(Left(Temp2$,iEnd-1));										
+		clearbuffer (Temp2$); 
+
+		Temp2$ = Remove(",",Temp1$);													//NEW OFF Value LOGIC---------------------------------							
+		iEnd = Find    (",",Temp2$);																													
+        iScene_OFF [iPosition] =  262* atoi (Left(Temp2$,iEnd-1));						//*262 = .4% which will leave a relay on (Minimum value)							
+		clearbuffer (Temp2$);    
+                                                    		
+		Clearbuffer (Temp1$);
+																																																//End If
+		}
+	  }																					//End 2nd While (Finding ||)
+	}
+
+	Fileclose (nFileHandel);															// Close File
+
+	Clearbuffer (Data_Buffer$);															//Clear all on exit of the innrer most loop
+	Clearbuffer (data_Buffer1$);
+
+	EndFileOperations();																//End File Op
+
+   }
+ Updating = 0;
+																						//Reset the update flag
+Call Update_Scenes(); 
+Call Fade_Rate_Update();																//Call all updates
+Call Update_Max_Values();
+CALL Update_Load_Names();
+Call Off_Value();																		//NEW OFF VALUE-------------------------------------------
+Pulse(50, Complete);																	//Send up the sucess flag
+
+}
+	
+/*************************************************************************************************
+ The Tihs
+**************************************************************************************************/
+ 
+Push Update																				//Update the scene, call the function
+	{
+	Call Parse_File();																	//Start the parsing function
+	File_Read_Error = 0;																//Set the read error to  none
+	}
+
+Push ALL_OFF																			//This is used when the slider, or anything triggers the "off" scene
+{
+iCurrent_Scene = 1;
+}
+
+Push Update_FB																			//This updates the feedback for the currrent scene value
+	{
+	Call Feedback();																	//External feedback updator (allows ramping to stop and saves processing!)
+	}
+
+/*************************************************************************************************
+ Function Main
+**************************************************************************************************/
+
+Function Main()
+	{
+	Waitforinitializationcomplete();													//Wait untill ready											
+
+	Updating = 0;																		//Reset all values
+    Busy = 0;
+	iCurrent_Scene = 1;		
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////END////////////////////////////////////////////////////////////////

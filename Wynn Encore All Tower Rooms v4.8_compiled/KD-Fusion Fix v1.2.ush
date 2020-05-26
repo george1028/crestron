@@ -1,0 +1,576 @@
+[BEGIN]
+  Version=1
+[END]
+[BEGIN]
+  ObjTp=FSgntr
+  Sgntr=UserSPlus
+  RelVrs=1
+  IntStrVrs=1
+  SPlusVrs=4.04.01
+  CrossCplrVrs=1.3
+[END]
+[BEGIN]
+  ObjTp=Hd
+  Cmn1=KD-Fusion Fix By Kevin Dry\\*****************************************************
+  Cmn2=**********\\KD-Fusion Fix By Kevin Dry is designed to \\create a||1
+  Cmn3=large string that shows all errors in a Fusion system.\\\\Text fields||1
+  Cmn4=are reduced to 15 chacterss each due to the 255\\string length limitation.
+  Cmn5=||1\\\\The concept was to take all errors of a specific type and send||1
+  Cmn6=them \\into this module.  For example you may have 10 touch screens.
+  Cmn7=||2Simply\\run all of them to an "OR" and to the Alert input on the||1
+  Cmn8=module. The \\corrosponding text field should read TP_OFFLINE.||2
+  Cmn9=Alert #2 may be\\a keypad.  Corrosponding text would be KP_OFFLINE.
+  Cmn10=||1And so-on.\\\\The run line can be set high, or can be set to stop||1
+  Cmn11=showing alerts.\\\\||1
+[END]
+[BEGIN]
+  ObjTp=Symbol
+  Exclusions=1,19,20,21,88,89,167,168,179,213,214,215,216,217,225,226,248,249,266,267,310,718,756,854,6114,
+  Exclusions_CDS=5
+  Inclusions_CDS=6
+  Name=KD-Fusion Fix v1.2
+  SmplCName=KD-Fusion Fix v1.2.usp
+  Code=1
+  SysRev5=4.006
+  SMWRev=3.00.00
+  InputCue1=Run
+  InputSigType1=Digital
+  InputCue2=Update
+  InputSigType2=Digital
+  InputCue3=Alert[#]
+  InputSigType3=Digital
+  OutputList2Cue1=Error$
+  OutputList2SigType1=Serial
+  OutputList2Cue2=Individual_error$
+  OutputList2SigType2=Serial
+  ParamCue1=[Reference Name]
+  ParamCue2=[~UNUSED~]
+  ParamSigType2=Constant
+  ParamCue3=[~UNUSED~]
+  ParamSigType3=Constant
+  ParamCue4=[~UNUSED~]
+  ParamSigType4=Constant
+  ParamCue5=[~UNUSED~]
+  ParamSigType5=Constant
+  ParamCue6=[~UNUSED~]
+  ParamSigType6=Constant
+  ParamCue7=[~UNUSED~]
+  ParamSigType7=Constant
+  ParamCue8=[~UNUSED~]
+  ParamSigType8=Constant
+  ParamCue9=[~UNUSED~]
+  ParamSigType9=Constant
+  ParamCue10=[~UNUSED~]
+  ParamSigType10=Constant
+  ParamCue11=[~UNUSED~]
+  ParamSigType11=Constant
+  ParamCue12=[~UNUSED~]
+  ParamSigType12=Constant
+  ParamCue13=[~UNUSED~]
+  ParamSigType13=Constant
+  ParamCue14=[~UNUSED~]
+  ParamSigType14=Constant
+  ParamCue15=[~UNUSED~]
+  ParamSigType15=Constant
+  ParamCue16=[~UNUSED~]
+  ParamSigType16=Constant
+  ParamCue17=[~UNUSED~]
+  ParamSigType17=Constant
+  ParamCue18=[~UNUSED~]
+  ParamSigType18=Constant
+  ParamCue19=[~UNUSED~]
+  ParamSigType19=Constant
+  ParamCue20=[~UNUSED~]
+  ParamSigType20=Constant
+  ParamCue21=[~UNUSED~]
+  ParamSigType21=Constant
+  ParamCue22=[~UNUSED~]
+  ParamSigType22=Constant
+  ParamCue23=[~UNUSED~]
+  ParamSigType23=Constant
+  ParamCue24=Active_Text[1]
+  ParamSigType24=String
+  ParamCue25=Active_Text[2]
+  ParamSigType25=String
+  ParamCue26=Active_Text[3]
+  ParamSigType26=String
+  ParamCue27=Active_Text[4]
+  ParamSigType27=String
+  ParamCue28=Active_Text[5]
+  ParamSigType28=String
+  ParamCue29=Active_Text[6]
+  ParamSigType29=String
+  ParamCue30=Active_Text[7]
+  ParamSigType30=String
+  ParamCue31=Active_Text[8]
+  ParamSigType31=String
+  ParamCue32=Active_Text[9]
+  ParamSigType32=String
+  ParamCue33=Active_Text[10]
+  ParamSigType33=String
+  ParamCue34=Active_Text[11]
+  ParamSigType34=String
+  ParamCue35=Active_Text[12]
+  ParamSigType35=String
+  ParamCue36=Active_Text[13]
+  ParamSigType36=String
+  ParamCue37=Active_Text[14]
+  ParamSigType37=String
+  ParamCue38=Active_Text[15]
+  ParamSigType38=String
+  ParamCue39=Active_Text[16]
+  ParamSigType39=String
+  ParamCue40=Active_Text[17]
+  ParamSigType40=String
+  ParamCue41=Active_Text[18]
+  ParamSigType41=String
+  ParamCue42=Active_Text[19]
+  ParamSigType42=String
+  ParamCue43=Active_Text[20]
+  ParamSigType43=String
+  ParamCue44=[~UNUSED~]
+  ParamSigType44=Constant
+  ParamCue45=Inactive_Text[1]
+  ParamSigType45=String
+  ParamCue46=Inactive_Text[2]
+  ParamSigType46=String
+  ParamCue47=Inactive_Text[3]
+  ParamSigType47=String
+  ParamCue48=Inactive_Text[4]
+  ParamSigType48=String
+  ParamCue49=Inactive_Text[5]
+  ParamSigType49=String
+  ParamCue50=Inactive_Text[6]
+  ParamSigType50=String
+  ParamCue51=Inactive_Text[7]
+  ParamSigType51=String
+  ParamCue52=Inactive_Text[8]
+  ParamSigType52=String
+  ParamCue53=Inactive_Text[9]
+  ParamSigType53=String
+  ParamCue54=Inactive_Text[10]
+  ParamSigType54=String
+  ParamCue55=Inactive_Text[11]
+  ParamSigType55=String
+  ParamCue56=Inactive_Text[12]
+  ParamSigType56=String
+  ParamCue57=Inactive_Text[13]
+  ParamSigType57=String
+  ParamCue58=Inactive_Text[14]
+  ParamSigType58=String
+  ParamCue59=Inactive_Text[15]
+  ParamSigType59=String
+  ParamCue60=Inactive_Text[16]
+  ParamSigType60=String
+  ParamCue61=Inactive_Text[17]
+  ParamSigType61=String
+  ParamCue62=Inactive_Text[18]
+  ParamSigType62=String
+  ParamCue63=Inactive_Text[19]
+  ParamSigType63=String
+  ParamCue64=Inactive_Text[20]
+  ParamSigType64=String
+  MinVariableInputs=3
+  MaxVariableInputs=22
+  MinVariableInputsList2=0
+  MaxVariableInputsList2=0
+  MinVariableOutputs=0
+  MaxVariableOutputs=0
+  MinVariableOutputsList2=2
+  MaxVariableOutputsList2=2
+  MinVariableParams=44
+  MaxVariableParams=63
+  Expand=expand_inputs_with_params
+  Expand2=expand_separately
+  ProgramTree=Logic
+  SymbolTree=4
+  Hint=
+  PdfHelp=
+  HelpID= 
+  Render=4
+  Smpl-C=16
+  CompilerCode=-48
+  CompilerParamCode=27
+  CompilerParamCode5=14
+  NumFixedParams=1
+  Pp1=1
+  Pp24=24
+  Pp25=25
+  Pp26=26
+  Pp27=27
+  Pp28=28
+  Pp29=29
+  Pp30=30
+  Pp31=31
+  Pp32=32
+  Pp33=33
+  Pp34=34
+  Pp35=35
+  Pp36=36
+  Pp37=37
+  Pp38=38
+  Pp39=39
+  Pp40=40
+  Pp41=41
+  Pp42=42
+  Pp43=43
+  Pp45=45
+  Pp46=46
+  Pp47=47
+  Pp48=48
+  Pp49=49
+  Pp50=50
+  Pp51=51
+  Pp52=52
+  Pp53=53
+  Pp54=54
+  Pp55=55
+  Pp56=56
+  Pp57=57
+  Pp58=58
+  Pp59=59
+  Pp60=60
+  Pp61=61
+  Pp62=62
+  Pp63=63
+  Pp64=64
+  MPp=64
+  NVStorage=10
+  ParamSigType1=String
+  SmplCInputCue1=o#
+  SmplCOutputCue1=i#
+  SmplCInputList2Cue1=an#
+  SmplCOutputList2Cue1=ai#
+  SPlus2CompiledName=S2_KD_Fusion_Fix_v1_2
+  SymJam=NonExclusive
+  FileName=KD-Fusion Fix v1.2.ush
+  SIMPLPlusModuleEncoding=0
+  clz1=SIMPLSharpStringComparison
+  clz2=SSFileOps
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=1
+  Tp=1
+  NoS=False
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=24
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=25
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=26
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=27
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=28
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=29
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=30
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=31
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=32
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=33
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=34
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=35
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=36
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=37
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=38
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=39
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=40
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=41
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=42
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=43
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=45
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=46
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=47
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=48
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=49
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=50
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=51
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=52
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=53
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=54
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=55
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=56
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=57
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=58
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=59
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=60
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=61
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=62
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=63
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]
+[BEGIN]
+  ObjTp=Dp
+  H=64
+  Tp=1
+  HD=False
+  NoS=False
+  VVS=0
+[END]

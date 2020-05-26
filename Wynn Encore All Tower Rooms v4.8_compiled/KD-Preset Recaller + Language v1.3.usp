@@ -1,0 +1,329 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+*******************************************************************************************/
+/*
+Dealer Name:Crestron Las Vegas    
+System Name:KD-Preset Recaller + Language v1.3
+System Number:5154    
+Programmer:Kevin Dry    
+Comments:F.I.A.H.
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+*************************************************************************************************/
+
+#SYMBOL_NAME "KD-Preset Recaller + Language v1.3"
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_Trace
+#ANALOG_SERIAL_EXPAND ALLWITHANY
+
+#HELP_BEGIN
+KD-Preset Recaller + Language v1.3
+
+This module is designed to support 10 languages, and 100 total presets.
+This was designed for hotels where the presets could be stored on a central
+server,or local processor. 
+
+The file is a standard .csv excel document that should look like this:
+
+1	501	HBO		Language 2	Language 3	Language 4	Language 5	Language 6	Language 7	Language 8	Language 9	Language 10	||
+2	502	SHOW	Language 2	Language 3	Language 4	Language 5	Language 6	Language 7	Language 8	Language 9	Language 10	||
+                /////////////////////////////////
+1) Each section is an individual cell.  the first cell is the preset place holder,
+   and ultimatly could be in any order pending all numbers from 1 to 100 are included.
+2) All spaces need to be present.  The cells are arranged as follows:
+
+Position	Channel_number	Language_1	Language_2	Language_3	Language_4	Language_5	Language_6	Language_7	Language_8	Language_9	Language_10	end_line_pipes
+
+Be sure to set the print area that includes all used cells.
+
+Channel length, and language text can be any length up to 650 chacters for the 
+entire line (set by local variables)
+
+Channel numbers less than "0" are considered non active, and will not make the 
+associated digital join go high
+
+Actual sample excel text. This could be copy/pasted (from simpl + only!!) if you need a sample:
+
+1	33	FOX News	&#70;&#79;&#88;&#32;&#26032;&#38395;&#21488;	&#70;&#79;&#88;&#32;&#26032;&#32862;&#21488;		&#70;&#111;&#120; &#45684;&#49828;						||
+2	28	FOX Movies	&#70;&#79;&#88;&#32;&#30005;&#24433;&#21488;	&#70;&#79;&#88;&#32;&#38651;&#24433;&#21488;		&#70;&#111;&#120; &#50689;&#54868;						||
+
+Language 6-10 are not included.  Only the first 4 languages are included (this is also legal, and will only show these 
+ 
+
+
+File Path:
+
+\\NVRAM\\AV\\Wynn Channel Lineup v1.1.csv
+
+Where  NVRAM is th elocation, AV is the program slot, and the next portion is the 
+full name with file type at the end.  In this case the document is a .csv (Comma Seperated Value)
+ 
+
+
+Language input starts at # 0!!!    0 = the first language, 1 = the second and so on.
+
+v1.3 allows for variable inputs/outputs instead of a fixed value of 100 selections/outputs
+ 
+#HELP_END
+
+/*************************************************************************************************
+ IO'zzzz 
+**************************************************************************************************/
+
+Digital_Input Update;
+
+Digital_Input _SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,Select_Preset[100];
+
+Analog_Input _SKIP_,Language;
+ 
+/////////////////////////////
+
+Analog_Output _SKIP_, Preset_Channel;
+
+Digital_Output Reading_From_File,File_read_error,File_Read_Complete;
+
+String_Output _SKIP_,_SKIP_, Current_Language[500];
+
+Digital_Output _SKIP_,_SKIP_,_SKIP_,_SKIP_, Display_Preset[256];
+
+/*************************************************************************************************
+ Parameters
+*************************************************************************************************/
+
+String_Parameter _SKIP_,_SKIP_,_SKIP_,File_path$[255];
+
+/*************************************************************************************************
+ Variables
+**************************************************************************************************/
+
+Integer NumInputs;
+
+String Data_Buffer$[65534];
+
+utf16 String Channel_Number$[100][100],Language1$[100][500],Language2$[100][500],Language3$[100][500],Language4$[100][500],Language5$[100][500],
+									   Language6$[100][500],Language7$[100][500],Language8$[100][500],Language9$[100][500],Language10$[100][500];
+	
+/*************************************************************************************************
+ Function
+**************************************************************************************************/
+
+Function LanguageUpdate()
+{
+Integer x;
+
+	For (X = 1 TO NumInputs)																// Loops the language outputs
+	
+	If (Language = 0)																	//Language is zero based from the input.
+	{
+    Current_Language[x] = Language1$[X];
+    }
+	
+	Else If (Language = 1)
+	{
+    Current_Language[x] = Language2$[X];
+    }
+	
+	Else If (Language = 2)
+	{
+    Current_Language[x] = Language3$[X];
+    }
+
+	Else If (Language = 3)
+	{
+    Current_Language[x] = Language4$[X];
+    }
+
+	Else If (Language = 4)
+	{
+    Current_Language[x] = Language5$[X];
+    }
+
+	Else If (Language = 5)
+	{
+    Current_Language[x] = Language6$[X];
+    }
+
+	Else If (Language = 6)
+	{
+    Current_Language[x] = Language7$[X];
+    }
+
+	Else If (Language = 7)
+	{
+    Current_Language[x] = Language8$[X];
+    }
+
+	Else If (Language = 8)
+	{
+    Current_Language[x] = Language9$[X];
+    }
+	
+ 	Else If (Language = 9)
+	{
+    Current_Language[x] = Language10$[X];
+    }
+}
+
+Function Display_PS()
+{
+	Integer X;
+
+	For (X = 1 to NumInputs)
+    {
+		If ( 0 < (ATOI( Channel_Number$[x])))
+		{
+		Display_Preset[x] = 1;
+		}
+	
+		Else
+		{
+		Display_Preset[x] = 0;
+		}
+    }
+Call LanguageUpdate();
+
+}
+
+/*************************************************************************************************
+ The Tihs
+**************************************************************************************************/
+ 
+Push Update
+{
+	SIGNED_INTEGER nFileHandel;														//Local integer
+	Integer iPosition,iEnd;															//Position markers
+	String Temp1$[2000],Temp2$[2000];													//Temp strings
+    File_Read_Error = 0;
+    File_Read_Complete = 0;
+
+If (Reading_From_File = 0)
+	{	
+	StartFileOperations();
+    
+	nFileHandel = FileOpen ( File_path$, _O_RDONLY  | _o_Text );
+                                                                                    //"\\NVRAMDISK\\Channel Presets Template v1.1.csv"
+		If(nFileHandel < 0) 
+		{
+		File_Read_Error = 1;														//Report error
+		}	
+																					//Trace("nFileHandel= %d", nFilehandel);															                                            
+       While(FileRead(nFileHandel, data_Buffer$, 65534) > 0)						//Chunk the read file out to 65534 cghacters max
+   		{
+         Reading_From_File = 1;
+			
+		While( Find("||",Data_Buffer$))												//Search for the end line marker 
+		{
+		Temp1$ = Remove("||",Data_Buffer$);											//Remove the next field up to the "||"
+																					
+		Temp2$ = Remove(",",Temp1$);												//Remove the next field up to the ","
+		iEnd = Find    (",",Temp2$);												//Find the "," as the marker for the next section				
+        iPosition = atoi (Left (Temp2$,iEnd-1));									//Get the position marker
+  		Clearbuffer (Temp2$);														//Clear the temp string
+																					
+		Temp2$ = Remove(",",Temp1$);												//Remove the next field up to the ","
+		iEnd = Find(",",Temp2$);													//Find the "," as the marker for the next section																
+        Channel_Number$[iPosition] = Left(Temp2$,iEnd-1);							//Get the position marker
+		Clearbuffer (Temp2$);														//Clear the temp buffer
+        
+		Temp2$ = Remove(",",Temp1$);												//You get the idea right?  Rinse/Repeat  This is for each languae
+		iEnd = Find    (",",Temp2$);																													
+        Language1$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												//Continue on for each language 2 through 10
+		iEnd = Find    (",",Temp2$);																													
+        Language2$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        Language3$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        Language4$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        Language5$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        Language6$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        Language7$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);			
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        Language8$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);
+
+		Temp2$ = Remove(",",Temp1$);												
+		iEnd = Find    (",",Temp2$);																													
+        Language9$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);
+                                                                     				
+		Temp2$ = Remove(",",Temp1$);												//This is the 10th language										
+		iEnd = Find    (",",Temp2$);																													
+        Language10$[iPosition] = Left(Temp2$,iEnd-1);									
+		clearbuffer (Temp2$);	
+	
+		Clearbuffer (Temp1$);														//This dumps the || so the parsing can continue													
+		}																			//End While
+
+	}																				//End If
+																					//End file op
+  }
+Fileclose (nFileHandel);															//Close the file AFTER you are done file op
+EndFileOperations();
+
+ 	Call Display_PS();
+  	Reading_From_File = 0;
+	Delay (500); 
+	File_Read_Complete = 1;															//Reset the update flag
+}
+
+Change Language																		//Language selector
+	{
+	Call LanguageUpdate();
+	}
+
+Change Select_Preset																//Preset selector
+	{
+	Integer x;																		//Local variable
+
+	X=Getlastmodifiedarrayindex();													//Last input
+
+	Preset_Channel = ATOI( Channel_Number$[x]);										//Send the channel number
+	}
+
+/*************************************************************************************************
+ Function Main
+**************************************************************************************************/
+
+Function Main()
+	{
+	Waitforinitializationcomplete();
+
+	Reading_From_File = 0;
+	File_Read_Error = 0;
+	File_Read_Complete = 0;
+
+FOR(NumInputs = 100 to 1 Step -1)                //Get the number of inputs defined
+       {
+       IF(IsSignalDefined(Select_Preset[NumInputs]))
+
+          Break; 
+        }
+
+	}
